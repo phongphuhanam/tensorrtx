@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <sys/stat.h> 
 #include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 bool signal_received = false;
 
@@ -18,6 +20,14 @@ void sig_handler(int signo)
 		printf("received SIGINT\n");
 		signal_received = true;
 	}
+}
+
+std::string getdefault_env(const char * env, const char * default_value) {
+    std::string res = std::string(getenv(env));
+    if (res.length() <= 0) {
+        res = std::string(default_value);
+    }
+    return res;
 }
 
 int makedir(std::string dir_name) 
@@ -515,7 +525,28 @@ int main(int argc, char** argv) {
     CHECK(cudaStreamCreate(&stream));
 
     int fcount = 0;
+    
+    // std::string out_text_file = getdefault_env("MAP_OUT", "./out_map.txt");
+    bool is_save_image = false;
+    std::string out_text_file = "./out_map.txt";
+    std::cout << "Save to " << out_text_file << std::endl;
+    std::string sep = ",";
+    std::ofstream outdet(out_text_file);
+    outdet << "Filename,x,y,w,h,category_id,prob" << std::endl;
+    outdet.flush();
+
+    std::ofstream outtime("./out_time.txt");
+
+
     for (int f = 0; f < (int)file_names.size() && !signal_received; f++) {
+        if (f % 100 == 0) {
+            std::cout << f << " images done \n";
+            outtime.flush();
+            is_save_image = true;
+        } else {
+            is_save_image = false;
+        }
+        
         fcount++;
         if (fcount < BATCH_SIZE && f + 1 != (int)file_names.size()) continue;
         for (int b = 0; b < fcount; b++) {
@@ -539,8 +570,12 @@ int main(int argc, char** argv) {
         auto start = std::chrono::system_clock::now();
         doInference(*context, stream, buffers, data, prob, BATCH_SIZE);
         auto end = std::chrono::system_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+        
+        outtime << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << std::endl;
+        // std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+        
         std::vector<std::vector<Yolo::Detection>> batch_res(fcount);
+
         for (int b = 0; b < fcount; b++) {
             auto& res = batch_res[b];
             nms(res, &prob[b * OUTPUT_SIZE], CONF_THRESH, NMS_THRESH);
@@ -548,16 +583,37 @@ int main(int argc, char** argv) {
         for (int b = 0; b < fcount; b++) {
             auto& res = batch_res[b];
             //std::cout << res.size() << std::endl;
+
             cv::Mat img = cv::imread(std::string(argv[2]) + "/" + file_names[f - fcount + 1 + b]);
+            
             for (size_t j = 0; j < res.size(); j++) {
                 cv::Rect r = get_rect(img, res[j].bbox);
-                cv::rectangle(img, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
-                cv::putText(img, std::to_string((int)res[j].class_id), cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0xFF, 0xFF, 0xFF), 2);
+                
+                outdet << file_names[f - fcount + 1 + b] << sep;
+                outdet << r.x << sep;
+                outdet << r.y << sep;
+                outdet << r.width << sep;
+                outdet << r.height << sep;
+                outdet << res[j].class_id << sep;
+                outdet << res[j].conf << std::endl;
+                
+                if (is_save_image) {
+                    cv::rectangle(img, r, cv::Scalar(0x27, 0xC1, 0x36), 2);
+                    cv::putText(img, std::to_string((int)res[j].class_id), cv::Point(r.x, r.y - 1), cv::FONT_HERSHEY_PLAIN, 1.2, cv::Scalar(0xFF, 0xFF, 0xFF), 2);
+                }
             }
-            cv::imwrite("_" + file_names[f - fcount + 1 + b], img);
+            if (is_save_image) {
+                cv::imwrite("_" + file_names[f - fcount + 1 + b], img);
+            }
         }
         fcount = 0;
+        outdet.flush();
     }
+    outdet.flush();
+    outdet.close();
+
+    outtime.flush();
+    outdet.flush();
 
     // Release stream and buffers
     cudaStreamDestroy(stream);
@@ -568,6 +624,7 @@ int main(int argc, char** argv) {
     engine->destroy();
     runtime->destroy();
 
+    std::cout << "End of program \n";
     // Print histogram of the output distribution
     //std::cout << "\nOutput:\n\n";
     //for (unsigned int i = 0; i < OUTPUT_SIZE; i++)
