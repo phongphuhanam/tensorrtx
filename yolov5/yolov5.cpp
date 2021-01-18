@@ -4,7 +4,7 @@
 #include "logging.h"
 #include "common.hpp"
 
-#define USE_FP16  // comment out this if want to use FP32
+#define USE_FP32  // comment out this if want to use FP32
 #define DEVICE 0  // GPU id
 #define NMS_THRESH 0.4
 #define CONF_THRESH 0.5
