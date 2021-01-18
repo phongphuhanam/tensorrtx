@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) YOLOv5",
+            "name": "(gdb) YOLOv5 map",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/yolov5/build/yolov5",
+            "program": "${workspaceFolder}/yolov5/build/yolov5_map",
             "args": [
                 "-d",
                 "../../yolov3-spp/samples"

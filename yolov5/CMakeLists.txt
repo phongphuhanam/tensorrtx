@@ -33,5 +33,12 @@ target_link_libraries(yolov5 cudart)
 target_link_libraries(yolov5 myplugins)
 target_link_libraries(yolov5 ${OpenCV_LIBS})
 
+add_executable(yolov5_map ${PROJECT_SOURCE_DIR}/yolov5_map.cpp)
+target_link_libraries(yolov5_map nvinfer)
+target_link_libraries(yolov5_map cudart)
+target_link_libraries(yolov5_map myplugins)
+target_link_libraries(yolov5_map ${OpenCV_LIBS})
+
+
 add_definitions(-O2 -pthread)
 

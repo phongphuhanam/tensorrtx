@@ -4,6 +4,34 @@
 #include "logging.h"
 #include "common.hpp"
 
+#include <signal.h>
+#include <stdlib.h>
+#include <sys/stat.h> 
+#include <sys/types.h>
+
+bool signal_received = false;
+
+void sig_handler(int signo)
+{
+	if( signo == SIGINT )
+	{
+		printf("received SIGINT\n");
+		signal_received = true;
+	}
+}
+
+int makedir(std::string dir_name) 
+{
+    int check = mkdir(dir_name.c_str(), 0777);
+    if (!check) {
+        std::cout << "Image directory " << dir_name.c_str() << " created" << std::endl;
+        return 0;
+    } else {
+        std::cout << "Unable to create directory " << dir_name.c_str() << ", End!!" << std::endl;
+        return -1;
+    }
+}
+
 #define USE_FP32  // comment out this if want to use FP32
 #define DEVICE 0  // GPU id
 #define NMS_THRESH 0.4
@@ -412,6 +440,11 @@ void doInference(IExecutionContext& context, cudaStream_t& stream, void **buffer
 }
 
 int main(int argc, char** argv) {
+    if( signal(SIGINT, sig_handler) == SIG_ERR ) {
+        printf("can't catch SIGINT\n");
+        return -1;
+    }
+
     cudaSetDevice(DEVICE);
     // create a model using the API directly and serialize it to a stream
     char *trtModelStream{ nullptr };
@@ -482,7 +515,7 @@ int main(int argc, char** argv) {
     CHECK(cudaStreamCreate(&stream));
 
     int fcount = 0;
-    for (int f = 0; f < (int)file_names.size(); f++) {
+    for (int f = 0; f < (int)file_names.size() && !signal_received; f++) {
         fcount++;
         if (fcount < BATCH_SIZE && f + 1 != (int)file_names.size()) continue;
         for (int b = 0; b < fcount; b++) {
