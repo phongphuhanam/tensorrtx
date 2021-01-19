@@ -8,7 +8,10 @@ option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_BUILD_TYPE Debug)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 find_package(CUDA REQUIRED)
+message("-- Found CUDA: " ${CUDA_FOUND})
+find_package(CUDNN REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 # include and link dirs of cuda and tensorrt, you need adapt them if yours are different
