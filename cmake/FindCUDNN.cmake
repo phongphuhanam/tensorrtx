@@ -5,8 +5,14 @@ if(CUDA_FOUND)
   unset(CUDA_cudnn_LIBRARY CACHE)
 
   find_cuda_helper_libs(nvinfer)
+  message("-- CUDA_nvinfer_LIBRARY: " ${CUDA_nvinfer_LIBRARY})
   set(NVINFER_LIBRARY ${CUDA_nvinfer_LIBRARY} CACHE FILEPATH "location of the nvinfer library")
   unset(CUDA_nvinfer_LIBRARY CACHE)
+
+  find_cuda_helper_libs(cudart)
+  message("-- CUDA_cudart_LIBRARY: " ${CUDA_cudart_LIBRARY})
+  set(CUDART_LIBRARY ${CUDA_cudart_LIBRARY} CACHE FILEPATH "location of the cudart library")
+  unset(CUDA_cudart_LIBRARY CACHE)
 endif()
 
 # find the include
