@@ -23,6 +23,7 @@ void sig_handler(int signo)
 }
 
 std::string getdefault_env(const char * env, const char * default_value) {
+    // const char * env_data = getenv(env);
     std::string res = std::string(getenv(env));
     if (res.length() <= 0) {
         res = std::string(default_value);
@@ -42,13 +43,28 @@ int makedir(std::string dir_name)
     }
 }
 
-#define USE_FP32  // comment out this if want to use FP32
-#define DEVICE 0  // GPU id
-#define NMS_THRESH 0.4
-#define CONF_THRESH 0.5
-#define BATCH_SIZE 1
+#ifdef USE_FP16
+    #warning "Use fp16"
+#endif
 
-#define NET s  // s m l x
+// #define USE_FP32  // comment out this if want to use FP32
+#define DEVICE 0  // GPU id
+#ifndef NMS_THRESH
+    #define NMS_THRESH 0.65
+#endif
+
+#ifndef CONF_THRESH
+    #define CONF_THRESH 0.001
+#endif
+
+#ifndef BATCH_SIZE
+    #define BATCH_SIZE 1
+#endif
+
+#ifndef NET
+    #define NET s  // s m l x
+#endif
+
 #define NETSTRUCT(str) createEngine_##str
 #define CREATENET(net) NETSTRUCT(net)
 #define STR1(x) #x

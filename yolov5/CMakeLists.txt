@@ -18,10 +18,29 @@ include_directories(${PROJECT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${CUDNN_I
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Ofast -Wfatal-errors -D_MWAITXINTRIN_H_INCLUDED")
 
-# IF (NOT DEFINED _MYDEFINE)
-#     SET(_MYDEFINE <default value>)
-# ENDIF()
-# ADD_DEFINITIONS(-D_MYDEFINE=${_MYDEFINE})
+IF (NOT DEFINED NMS_THRESH)
+    SET(NMS_THRESH 0.65)
+ENDIF()
+IF (NOT DEFINED CONF_THRESH)
+    SET(CONF_THRESH 0.001)
+ENDIF()
+
+IF (NOT DEFINED BATCH_SIZE)
+    SET(BATCH_SIZE 1)
+ENDIF()
+
+IF (NOT DEFINED NET)
+    SET(NET s)
+ENDIF()
+
+add_definitions(-DNMS_THRESH=${NMS_THRESH} -DCONF_THRESH=${CONF_THRESH} -DBATCH_SIZE=${BATCH_SIZE} -DNET=${NET})
+
+if (DEFINED USE_FP16)
+    add_definitions(-DUSE_FP16)
+endif()
+
+
+
 
 cuda_add_library(myplugins SHARED ${PROJECT_SOURCE_DIR}/yololayer.cu)
 target_link_libraries(myplugins ${CUDNN_LIBRARIES} ${CUDART_LIBRARY})
