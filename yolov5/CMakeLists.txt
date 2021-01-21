@@ -40,8 +40,6 @@ if (DEFINED USE_FP16)
 endif()
 
 
-
-
 cuda_add_library(myplugins SHARED ${PROJECT_SOURCE_DIR}/yololayer.cu)
 target_link_libraries(myplugins ${CUDNN_LIBRARIES} ${CUDART_LIBRARY})
 
